@@ -310,6 +310,19 @@ class SynapseTags:
     # The name of the external cache
     CACHE_NAME = "cache.name"
 
+    # Used to tag function arguments
+    #
+    # Tag a named arg. The name of the argument should be appended to this prefix.
+    FUNC_ARG_PREFIX = "ARG."
+    # Tag extra variadic number of positional arguments (`def foo(first, second, *extras)`)
+    FUNC_ARGS = "args"
+    # Tag keyword args
+    FUNC_KWARGS = "kwargs"
+
+    # Some intermediate result that's interesting to the function. The label for
+    # the result should be appended to this prefix.
+    RESULT_PREFIX = "RESULT."
+
 
 class SynapseBaggage:
     FORCE_TRACING = "synapse-force-tracing"
@@ -966,10 +979,10 @@ def tag_args(func: Callable[P, R]) -> Callable[P, R]:
         # FIXME: We could update this to handle any type of function by ignoring the
         #   first argument only if it's named `self` or `cls`. This isn't fool-proof
         #   but handles the idiomatic cases.
-        for i, arg in enumerate(args[1:], start=1):
-            set_tag("ARG_" + argspec.args[i], str(arg))
-        set_tag("args", str(args[len(argspec.args) :]))
-        set_tag("kwargs", str(kwargs))
+        for i, arg in enumerate(args[1:], start=1):  # type: ignore[index]
+            set_tag(SynapseTags.FUNC_ARG_PREFIX + argspec.args[i], str(arg))
+        set_tag(SynapseTags.FUNC_ARGS, str(args[len(argspec.args) :]))  # type: ignore[index]
+        set_tag(SynapseTags.FUNC_KWARGS, str(kwargs))
         yield
 
     return _custom_sync_async_decorator(func, _wrapping_logic)
